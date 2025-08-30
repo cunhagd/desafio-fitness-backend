@@ -1,0 +1,129 @@
+// /backend/prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String      @id @default(uuid())
+  firstName     String
+  lastName      String
+  email         String      @unique
+  password      String
+  birthDate     DateTime
+  height        Int
+  initialWeight Float
+  goalWeight    Float
+  createdAt     DateTime    @default(now())
+  partnerId     String?     @unique
+
+  weightLogs    WeightLog[]
+  errorLogs     ErrorLog[]
+  transactions  Transaction[]
+  
+  // CAMPOS ADICIONADOS PARA CORRIGIR O ERRO
+  sentInvitations     Invitation[] @relation("SentInvitations")
+  receivedInvitations Invitation[] @relation("ReceivedInvitations")
+  notifications Notification[] // <-- Adicione esta linha
+  achievements  UserAchievement[] // <-- Adicione esta linha
+  progressPhotos ProgressPhoto[] // <-- Adicione esta linha
+
+
+}
+
+model WeightLog {
+  id      String   @id @default(uuid())
+  weight  Float
+  logDate DateTime @default(now())
+  userId  String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ErrorLog {
+  id        String    @id @default(uuid())
+  erroredAt DateTime  @default(now())
+  reason    String    @db.Text
+  type      ErrorType
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum ErrorType {
+  DRINKING
+  SMOKING
+  BOTH
+}
+
+model Transaction {
+  id              String          @id @default(uuid())
+  amount          Float
+  description     String
+  transactionDate DateTime        @default(now())
+  type            TransactionType
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum TransactionType {
+  DEPOSIT
+  PENALTY_GIVEN
+  PENALTY_RECEIVED
+}
+
+model Invitation {
+  id           String   @id @default(uuid())
+  senderId     String
+  invitedEmail String
+  status       String   @default("PENDING")
+  createdAt    DateTime @default(now())
+
+  sender   User @relation("SentInvitations", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedInvitations", fields: [invitedEmail], references: [email])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// NOVO ENUM PARA OS TIPOS DE CONQUISTA
+enum AchievementType {
+  WEIGHT_LOSS_1KG
+  WEIGHT_LOSS_3KG
+  WEIGHT_LOSS_5KG
+  WEIGHT_LOSS_10KG
+  FIRST_WEIGHT_LOG
+  FIRST_ERROR_LOG
+}
+
+// NOVO MODELO PARA ARMAZENAR AS CONQUISTAS DESBLOQUEADAS
+model UserAchievement {
+  id            String          @id @default(uuid())
+  unlockedAt    DateTime        @default(now())
+  
+  type          AchievementType
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type]) // Garante que um usuário só pode ter cada conquista uma vez
+}
+
+// NOVO MODELO
+model ProgressPhoto {
+  id        String   @id @default(uuid())
+  imageUrl  String   @db.Text // Armazenaremos a imagem como uma string Base64
+  createdAt DateTime @default(now())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
