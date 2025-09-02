@@ -1,25 +1,22 @@
 // /backend/src/server.ts
-
-const express = require('express');
-const cors = require('cors');
-const { userRoutes } = require('./routes/user.routes');
-const { authRoutes } = require('./routes/auth.routes');
-const { weightRoutes } = require('./routes/weight.routes');
-const { errorRoutes } = require('./routes/error.routes');
-const { balanceRoutes } = require('./routes/balance.routes');
-const { dashboardRoutes } = require('./routes/dashboard.routes');
-const { inviteRoutes } = require('./routes/invite.routes');
-const { notificationRoutes } = require('./routes/notification.routes');
-const { achievementRoutes } = require('./routes/achievement.routes');
-const { photoRoutes } = require('./routes/photo.routes');
-const { partnerRoutes } = require('./routes/partner.routes');
+import express from 'express';
+import cors from 'cors';
+import { userRoutes } from './routes/user.routes';
+import { authRoutes } from './routes/auth.routes';
+import { weightRoutes } from './routes/weight.routes';
+import { errorRoutes } from './routes/error.routes';
+import { balanceRoutes } from './routes/balance.routes';
+import { dashboardRoutes } from './routes/dashboard.routes';
+import { inviteRoutes } from './routes/invite.routes';
+import { notificationRoutes } from './routes/notification.routes';
+import { achievementRoutes } from './routes/achievement.routes';
+import { photoRoutes } from './routes/photo.routes';
+import { partnerRoutes } from './routes/partner.routes';
 
 const app = express();
 const PORT = process.env.PORT || 3333;
 
 app.use(cors());
-
-// CORREÇÃO: Aumenta o limite para ambos os parsers para 50MB
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
@@ -33,7 +30,7 @@ app.use('/api/invites', inviteRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/achievements', achievementRoutes);
 app.use('/api/photos', photoRoutes);
-app.use('/api/partner', partnerRoutes); // Adicione a nova rota
+app.use('/api/partner', partnerRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 HTTP server running on http://localhost:${PORT}`);
