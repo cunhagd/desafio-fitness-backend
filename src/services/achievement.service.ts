@@ -1,9 +1,7 @@
 // /backend/src/services/achievement.service.ts
+import { prisma } from '../lib/prisma';
+import { AchievementType } from '@prisma/client';
 
-const { prisma } = require('../lib/prisma');
-const { AchievementType } = require('@prisma/client');
-
-// Definição de todas as conquistas disponíveis no sistema
 const ALL_ACHIEVEMENTS = [
   { type: AchievementType.FIRST_WEIGHT_LOG, name: "Primeiro Passo", description: "Você registrou seu primeiro peso!" },
   { type: AchievementType.WEIGHT_LOSS_1KG, name: "Começando a Leveza", description: "Você perdeu seu primeiro quilo!" },
@@ -14,8 +12,7 @@ const ALL_ACHIEVEMENTS = [
 ];
 
 class AchievementService {
-  // Função para verificar e conceder conquistas após uma ação
-  async checkAndAwardAchievements(userId) {
+  async checkAndAwardAchievements(userId: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: { weightLogs: { orderBy: { logDate: 'desc' } }, achievements: true }
@@ -25,18 +22,14 @@ class AchievementService {
     const unlockedTypes = user.achievements.map(a => a.type);
     const achievementsToCreate = [];
 
-    // --- Lógica de Conquistas de Perda de Peso ---
     if (user.weightLogs.length > 0) {
       const initialWeight = user.initialWeight;
       const currentWeight = user.weightLogs[0].weight;
       const weightLost = initialWeight - currentWeight;
 
-      // Conquista: Primeiro registro de peso
       if (!unlockedTypes.includes(AchievementType.FIRST_WEIGHT_LOG)) {
         achievementsToCreate.push({ userId, type: AchievementType.FIRST_WEIGHT_LOG });
       }
-
-      // Conquistas por quilos perdidos
       if (weightLost >= 1 && !unlockedTypes.includes(AchievementType.WEIGHT_LOSS_1KG)) {
         achievementsToCreate.push({ userId, type: AchievementType.WEIGHT_LOSS_1KG });
       }
@@ -51,17 +44,15 @@ class AchievementService {
       }
     }
     
-    // Salva todas as novas conquistas no banco de uma só vez
     if (achievementsToCreate.length > 0) {
       await prisma.userAchievement.createMany({
         data: achievementsToCreate,
-        skipDuplicates: true, // Segurança extra
+        skipDuplicates: true,
       });
     }
   }
 
-  // Função para listar todas as conquistas e o status do usuário
-  async listForUser(userId) {
+  async listForUser(userId: string) {
     const userAchievements = await prisma.userAchievement.findMany({
       where: { userId },
     });
@@ -75,4 +66,4 @@ class AchievementService {
   }
 }
 
-module.exports = { achievementService: new AchievementService() };
+export const achievementService = new AchievementService();
